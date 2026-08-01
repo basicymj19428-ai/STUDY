@@ -31,8 +31,24 @@
 //MCU의 고유 ID 레지스터중 DEV_ID(칩 종류를 식별하는 필드) 부분만 추출하기 위한 마스크
 #define IDCODE_DEVID_MASK 0x00000FFFU  
 
-/*---RCC레지스터 비트 밴딩 영역 주소로 접근하기 위한 매크로들이 시작되는 구역*/
+/*---RCC레지스터 비트 밴딩 영역 주소로 접근하기 위한 매크로들이 시작되는 구역---*/
 
 //상대 오프셋 값을 계산
 //SYSCFG가 PERIPH_BASE로 부터 얼마나 떨어진 위치에 있는지를 구함
 #define SYSCFG_OFFSET (SYSCFG_BASE - PERIPH_BASE)
+
+/*---SYSCFG_MEMRMP 레지스터(메모리 리매핑 설정 레지스터)관련 비트 밴딩 매크로 시작---*/
+/*---UFB_MODE 비트하나를 위한 alias word 주소를 정의---*/
+//UFB_MODE = User Bank swap/Flash mode 관련 비트, 특정 메모리 리매핑 옵션
+
+//MEMRMP 레지스터도 SYSCFG 주변 장치에 속해있음
+//레지스터가 SYSCFG 안에 있어 오프셋도 SYSCFG와 동일
+#define MEMRMP_OFFSET  SYSCFG_OFFSET
+
+//UFB_MODE 비트가 레지스터 내에서 몇번째 비트인지를 가져옴
+//SYSCFG_MEMRMP_UFB_MODE_Pos : CMSIS 헤더에서 정의된값
+#define UFB_MODE_BIT_NUMBER  SYSCFG_MEMRMP_UFB_MODE_Pos
+
+//PERIPH_BB_BASE : 주변장치 비트 밴딩 alias 영역의 시작 주소
+//(uint32_t)로 캐스팅 해서 최종적으로 주소값(정수)으로 확정
+#define UFB_MODE_BB  (uint32_t)(PERIPH_BB_BASE + (MEMRMP_OFFSET * 32U) + (UFB_MODE_BIT_NUMBER * 4U))
