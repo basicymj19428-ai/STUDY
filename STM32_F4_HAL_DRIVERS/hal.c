@@ -58,3 +58,6 @@
 
 //CMPCR 레지스터의 SYSCFG 내부 오프셋이 0x20이라는 뜻
 #define CMPCR_OFFSET (SUSCFG_OFFSET + 0x20U)
+
+//CMP_PD비트가 CMPCR 레지스터 내에서 몇번째 비트인지 가져옴(CMSIS헤더에 정의된값)
+#define CMP_PD_BIT_NUMBER  SYSCFG_CMPCR_CMP_PD_Pos
