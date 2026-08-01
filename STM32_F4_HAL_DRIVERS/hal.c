@@ -52,3 +52,9 @@
 //PERIPH_BB_BASE : 주변장치 비트 밴딩 alias 영역의 시작 주소
 //(uint32_t)로 캐스팅 해서 최종적으로 주소값(정수)으로 확정
 #define UFB_MODE_BB  (uint32_t)(PERIPH_BB_BASE + (MEMRMP_OFFSET * 32U) + (UFB_MODE_BIT_NUMBER * 4U))
+
+/*---SYSCFG_CMPCR 레즈스터 (I/O 컴펜세이션 셀 제어 레지스터)관련 밴딩매크로 시작---*/
+/*---CMP_PD비트(컴펜세이션 셀 Power-Down비트) 하나를 위한 alias word 주소를 정의---*/
+
+//CMPCR 레지스터의 SYSCFG 내부 오프셋이 0x20이라는 뜻
+#define CMPCR_OFFSET (SUSCFG_OFFSET + 0x20U)
