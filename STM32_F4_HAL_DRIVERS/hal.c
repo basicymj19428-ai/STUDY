@@ -53,7 +53,7 @@
 //(uint32_t)로 캐스팅 해서 최종적으로 주소값(정수)으로 확정
 #define UFB_MODE_BB  (uint32_t)(PERIPH_BB_BASE + (MEMRMP_OFFSET * 32U) + (UFB_MODE_BIT_NUMBER * 4U))
 
-/*---SYSCFG_CMPCR 레즈스터 (I/O 컴펜세이션 셀 제어 레지스터)관련 밴딩매크로 시작---*/
+/*---SYSCFG_CMPCR 레지스터 (I/O 컴펜세이션 셀 제어 레지스터)관련 밴딩매크로 시작---*/
 /*---CMP_PD비트(컴펜세이션 셀 Power-Down비트) 하나를 위한 alias word 주소를 정의---*/
 
 //CMPCR 레지스터의 SYSCFG 내부 오프셋이 0x20이라는 뜻
@@ -78,3 +78,18 @@
 //BSKCSEL 비트 하나만을 가리키는 alias 주소 완성
 #define MCHDLYCR_BSCKSEL_BB  (uint32_t)(PERIPH_BB_BASE + (MCHDLYCR_OFFSET * 32U) + (BSCKSEL_BIT_NUMBER * 4U))
 
+/*---이 파일에서만 쓰는 private 매크로(함수형 매크로 등) 정의 영역---*/
+
+/*---이 파일에서만 쓰는 private 전역 변수 정의 영역---*/
+
+//__IO : volatile을 의미하는 CMSIS 매크로(#define __IO volatile)
+//인터럽트(SysTick_Handler)에서 계속 갱신되고 다른코드에서 읽음 
+//컴파일러가 최적화로 값을 캐싱하지 않고 매번 실제 메모리를 읽도록 강제
+__IO uint32_t uwTick;  //틱카운터 변수
+
+//SysTick 인터럽트의 우선순위값을 저장하는 변수(초기값을 일부로 존재할수 없는 값으로 세팅)
+uint32_t uwTickPrio = (1UL << __NVIC_PRIO_BITS);
+
+//틱(uwTick)이 증가하는 주파수(빈도)를 저장하는 변수
+//HAL_TickFreqTypeDef는 열거형(enum)타입(HAL_SetTickFreq() 함수로 나중에 주파수 변경가능)
+HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT;  //1KHz
