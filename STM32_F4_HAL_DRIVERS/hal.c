@@ -61,3 +61,20 @@
 
 //CMP_PD비트가 CMPCR 레지스터 내에서 몇번째 비트인지 가져옴(CMSIS헤더에 정의된값)
 #define CMP_PD_BIT_NUMBER  SYSCFG_CMPCR_CMP_PD_Pos
+
+//CMP_PD 비트하나만을 가리키는 비트 밴딩 alias 주소를 계산
+#define CMPCR_CMP_PD_BB  (uint32_t)(PERIPH_BB_BASE + (CMPCR_OFFSET * 32U) + (CMP_PD_BIT_NUMBER * 4U))
+
+
+/*---SYSCFG_MCHDLYCR 레지스터(멀티채널 딜레이제어 레지스터)관련 비트 밴딩 매크로---*/
+/*---BSCKSEL 비트 하나를 위한 alias word 주소를 정의---*/
+
+//MCHDLYCR 레지스터는 SYSCFG 베이스로부터 0x30(=48바이트) 떨어진 위치에 있음
+#define MCHDLYCR_OFFSET  (SYSCFG_OFFSET + 0x30U)
+
+//BSCKSEL비트가 MCHDLYCR 레지스터 내에서 몇번째 비트인지 가져옴
+#define BSCKSEL_BIT_NUMBER  SYSCFG_MCHDLYCR_BSCKSEL_Pos
+
+//BSKCSEL 비트 하나만을 가리키는 alias 주소 완성
+#define MCHDLYCR_BSCKSEL_BB  (uint32_t)(PERIPH_BB_BASE + (MCHDLYCR_OFFSET * 32U) + (BSCKSEL_BIT_NUMBER * 4U))
+
