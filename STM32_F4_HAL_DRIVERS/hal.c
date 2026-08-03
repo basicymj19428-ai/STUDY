@@ -93,3 +93,41 @@ uint32_t uwTickPrio = (1UL << __NVIC_PRIO_BITS);
 //틱(uwTick)이 증가하는 주파수(빈도)를 저장하는 변수
 //HAL_TickFreqTypeDef는 열거형(enum)타입(HAL_SetTickFreq() 함수로 나중에 주파수 변경가능)
 HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT;  //1KHz
+
+/*---이 파일 내부에서만 쓰는 private 함수들의 프로토타입 선언 영역---*/
+
+/*---이 파일에서 실제로 구현하는 함수들이 시작되는 지점을 알리는 구획주석---*/
+HAL_StatusTypeDef HAL_Init(void)
+{
+//컴파일타임설정(stm32f4xx_hal_conf.h)에서 명령어 캐시를 켜기로 했다면(1) Flash 명령어 캐시를 활성화
+//CPU가 같은 코드를 반복 실행할때 Flash 접근없이 캐시에서 바로 읽어 속도 향상
+#if(INSTRUCTION_CACHE_ENABLE != 0U)  
+    __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
+#endif
+
+//데이터 캐시 : 조건부 활성화 -> 상수 데이터(const 배열 등) 반복 접근시 속도 향상
+#if(DATA_CACHE_ENABLE != 0U)
+    __HAL_FLASH_DATA_CACHE_ENABLE();
+#endif
+
+//프리페치 버퍼 활성화 : CPU가 다음 명령어를 미리 Flash에서 읽어와 대기시간 줄임
+#if(PREFETCH_ENABLE != 0U)
+    __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
+#endif
+
+    //Cortex-M의 NVIC 우선순위를 그룹 우선순위 4비트/서브우선순위 0비트로 설정
+    //선점 우선순위만 0~15까지 세밀하게 나누고 서브 우선순위 안쓰겠다는 뜻
+    HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+
+    //SysTick 타이머를 1ms 주기로 설정(인터럽트 우선순위를 TICK_INT_PRIORITY로 지정)
+    //PLL등 외부 클럭 설정전이라 시스템 클럭 = 리셋 직후 기본값이 내부 HSI(16MHz) 상태
+    HAL_InitTick(TICK_INT_PRIORITY);
+
+    //사용자가 stm32f4xx_hal_msp.c에 구현해야 하는 저수준 하드웨어 초기화 콜백
+    //__weak로 선언되어 있어서 사용자가 재정의 안하면 빈함수(아무동작 없음)로 링크
+    //보편적으로 클럭소스(HSE 등) 활성화, 일부 GPIO 초기 설정등을 함
+    HAL_MspInit();
+
+    //모든 과정이 끝나면 HAL_OK 반환
+    return HAL_OK;
+}
