@@ -131,3 +131,38 @@ HAL_StatusTypeDef HAL_Init(void)
     //모든 과정이 끝나면 HAL_OK 반환
     return HAL_OK;
 }
+
+//HAL의 공통부분을 역초기화하고 SysTick도 멈추는 함수
+HAL_StatusTypeDef HAL_DeInit(void)
+{
+    /*APB1 버스에 연결된 모든 주변장치(TIM2~7, UART2/3, I2C 1~3, SPI2/3 등)를
+    강제로 리셋 상태로 만들었다가(FORCE) 다시 풀어줌(RELEASE)*/
+    //순서대로 호출해야 리셋 펄스를 준 효과가 남
+    __HAL_RCC_APB1_FORCE_RESET();
+    __HAL_RCC_APB1_RELEASE_RESET();
+
+    //APB2버스 주변장치(TIM1/8, USART1/6, SPI1, ADC, SUSCFG 등) 리셋
+    __HAL_RCC_APB2_FORCE_RESET();
+    __HAL_RCC_APB2_RELEASE_RESET();
+
+    //AHB1 버스 주변장치(GPIO A ~ H, DMA 1/2, CRC등) 리셋
+    __HAL_RCC_AHB1_FORCE_RESET();
+    __HAL_RCC_AHB1_RELEASE_RESET();
+
+    //AHB2 버스 주변장치(USB OTG FS, RNG, 카메라 인터페이스 등) 리셋
+    __HAL_RCC_AHB2_FORCE_RESET();
+    __HAL_RCC_AHB2_RELEASE_RESET();
+
+    //AHB3 버스 주변장치(FMC/FSMC 외부 메모리 컨트롤러 등) 리셋
+    //APB1, APB2, AHB1, AHB2, AHB3에 연결된 거의 모든 주변장치를 순서대로 초기상태로 되돌림
+    //단 RCC자체나 코어 클럭 설정, GPIO 자체의 리셋등은 대상이 아님
+    __HAL_RCC_AHB3_FORCE_RESET();
+    __HAL_RCC_AHB3_RELEASE_RESET();
+
+    //HAL_MspInit()의 반대 짝 - 사용자가 stm32f4xx_hal_msp.c에 구현하는 __weak 콜백
+    //사용자가 커스텀으로 설정했던 클럭/GPIO 등을 되돌리는 역할
+    HAL_MspDeInit();
+
+    //항상 성공(HAL_OK)반환
+    return HAL_OK;
+}
