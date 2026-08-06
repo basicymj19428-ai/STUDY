@@ -170,3 +170,5 @@ HAL_StatusTypeDef HAL_DeInit(void)
 //stm32f4xx_hal.c에 있는 함수는 빈껍데기(절대 직접 수정 x)
 //사용자는 stm32f4xx_hal_msp.c에 같은 이름의 함수를 다시 작성하면 링커에 의해 채택
 __weak void HAL_MspInit(void)
+{
+}
