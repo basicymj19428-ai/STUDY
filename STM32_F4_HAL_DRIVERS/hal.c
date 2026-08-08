@@ -172,3 +172,41 @@ HAL_StatusTypeDef HAL_DeInit(void)
 __weak void HAL_MspInit(void)
 {
 }
+
+//stm32f4xx_hal.c의 빈함수는 건드리지 않고 필요하면 stm32f4fxx_hal_msp.c에 실제 구현함
+__weak void HAL_MspDeInit(void)
+{
+}
+
+__weak HAL_StatusTypeDef HAL_InitTic(uint32_t TickPriority)
+{
+    //SysTick 타이머의 리로드값을 계산해서 세팅하고 SysTick을 활성화
+    //1000U / uwTickFreq : 틱 주기가 몇 ms인지를 계산
+    //SystemCoreClock : 현재 CPU 클럭 주파수[Hz],uwTickFreq : 틱 주파수(1kHz = 1ms 마다 틱)
+    if(HAL_SYSTICK_Config(SystemCoreClock / (1000U / uwTickFreq)) > 0U)
+    {
+        return HAL_ERROR;  //실패시 즉시 HAL_ERROR 반환하고 함수 종류ㅛ
+    }
+
+    //전달받은 TickPriority값이 유효한 범위 안인지 먼저 검증
+    //(1UL << __NVUIC_PRIO_BITS) : MCU가 지원하는 우선순위의 최대 개수
+    if(TickPriority < (1UL << __NVUIC_PRIO_BITS))
+    {
+        //SysTick_IRQn의 선점 우선순위를 TickPriority로 서브우선순위는 0으로 설정
+        HAL_NVIC_SetPriority(SysTick IRQn, TickPriority, 0U);
+        
+        //전역 변수에 실제 적용된 우선순위를 저장(설정이 유효하게 완료)
+        uwTickPrio = TickPriority;  
+    }
+    else
+    {
+        //범위를 벗어나면(잘못된 값이 들어오면) HAL_ERROR 반환
+        return HAL_ERROR;
+    }
+
+    //SysTick 설정 + 우선순위 설정이 모두 성공하면 HAL_OK 반환
+    return HAL_OK;
+}
+
+__weak void HAL_IncTick(void)
+{}
