@@ -209,4 +209,53 @@ __weak HAL_StatusTypeDef HAL_InitTic(uint32_t TickPriority)
 }
 
 __weak void HAL_IncTick(void)
-{}
+{
+    //ms 단위 실제 경과 시간을 의미하도록 보정된 구조
+    uwTick += uwTickFreq;
+}
+
+__weak uint32_t HAL_GetTick(void)
+{
+    return uwTick;  //uwTick 변수값을 그대로 반환하는 단순 getter
+}
+
+uint32_t HAL_GetTickPrio(void)
+{
+    //uwTickPrio 값을 그대로 반환
+    //HAL_InitTick()이 성공적으로 호출된적 있으면 유효한값, 없으면 처음의 무효값 상태
+    return uwTickPrio;  
+}
+
+HAL_StatusTypeDef HAL_SetTickFreq(HAL_TickFreqTypeDef Freq)
+{
+    HAL_StatusTypeDef status = HAL_OK;
+    HAL_TickFreqTypeDef prevTickFreq;
+
+    //assert_param : 디버그 필드에서 Freq값이 유효한 enum범위인지 검사
+    assert_param(IS_TICKFREQ(freq));
+
+    //요청한 주파수가 현재와 다를때만 실제로 재설정 작업을 진행(불필요한 재설정 방지)
+    if(uwTickFreq != Freq)
+    {
+        prevTickFreq = uwTickFreq;  //재설정이 실패시 되돌리기 위해 바꾸기전 값 임시 백업
+
+        //전역 변수를 새 주파수 값으로 먼저 갱신
+        uwTickFreq = Freq;
+
+        //실제로 SysTick 타이머를 새 주파수 기준으로 다시설정
+        //우선순위는 기존에 쓰던 uwTickPrio를 그대로 재사용(우선순위는 안바꾸고 주파수만 바꾸는것)
+        status = HAL_InitTick(uwTickPrio);
+
+        //HAL_InitTick()이 실패했다면 전역변수를 원래 값으로 롤백
+        if(status != HAL_OK)
+        {
+            uwTickFreq = prevTickFreq;
+        }
+    }
+    return status;
+}
+
+HAL_TickFreqTypeDef HAL_GetTickFreq(void)
+{
+    return uwTickFreq;
+}
