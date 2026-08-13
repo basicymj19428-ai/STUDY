@@ -259,3 +259,30 @@ HAL_TickFreqTypeDef HAL_GetTickFreq(void)
 {
     return uwTickFreq;
 }
+
+__weak void HAL_Delay(uint32_t Delay)
+{
+    //함수가 호출된 시작시점의 현재 tick 값을 저장(기준점)
+    uint32_t tickstart = HAL_GetTick();
+
+    //사용자가 요청한 대기 시간을 로컬 변수에 복사(원본 Delay는 안건드림)
+    uint32_t wait = Delay;
+
+    if(wait < HAL_MAX_DELAY)
+    {
+        wait += (uint32_t)(uwTickFreq);  //최소 대기시간을 보장
+    }
+
+    //경과시간이 wait 이상이 되면 루프 종료(함수 리턴)
+    while((HAL_GetTick() - tickstart) < wait)
+    {
+
+    }
+}
+
+__weak void HAL_SuspendTick(void)
+{
+    /*SysTick카운터 자체(다운카운트)는 계속 동작하지만 카운터가 0에 도달해도 
+    더이상 인터럽트를 발생시키지 않음*/
+    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+}
