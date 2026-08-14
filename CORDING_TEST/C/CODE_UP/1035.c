@@ -7,5 +7,5 @@ int main(void)
 
     printf("%o\n", num);
 
-    return 0;\
+    return 0;
 }
