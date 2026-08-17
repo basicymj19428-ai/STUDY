@@ -286,3 +286,119 @@ __weak void HAL_SuspendTick(void)
     더이상 인터럽트를 발생시키지 않음*/
     SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
 }
+
+__weak void HAL_ResumeTick(void)
+{
+    //|=로 TICKINT 비트만 1로 세팅(나머지 비트는 그대로 유지)
+    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+}
+
+uint32_t HAL_GetHalVersion(void)
+{
+    //비트 패킹으로 만들어둔 상수값을 그대로 리턴
+    return __STM32F4xx_HAL_VERSION;
+}
+
+uint32_t HAL_GetREVID(void)
+{
+    //상위 16비트[31:16] : REV_ID(리비전 정보)
+    //하위 12비트[11:0] : DEV_ID(디바이스 종류 식별자)
+    return ((DBGMCU -> IDCODE) >> 16U);
+}
+
+uint32_t HAL_GetDEVID(void)
+{
+    //REV_ID(상위)는 필요없으므로 마스킹으로 걸러내고 DEV_ID(하위 12비트)만 남김
+    return ((DBGMCU -> IDCODE) & IDCODE_DEVID_MASK);
+}
+
+void HAL_DBGMCU_EnableDBGSleepMode(void)
+{
+    /*이 비트를 켜두면 CPU가 SLEEP모드로 들어가서 클럭이 일부 정지되어도
+    디브그 모듈만은 계속 살아 있어서 디버거로 상태 확인/제어가 가능*/
+    //안켜두면 SLEEP 진입시 디버거 연결이 끊긴것처럼 응답없음
+    SET_BIT(DBGMCU -> CR, DBGMCU_CR_DBG_SLEEP);
+}
+
+void HAL_DBGMCU_DisableDBGSleepMode(void)
+{
+    //DBG_SLEEP 비트를 0으로 클리어 -> SLEEP모드에서 디버그 모듈도 같이 꺼짐(전력 절약 우선)
+    CLEAR_BIT(DBGMCU -> CR, DBGMCU_CR_DBG_SLEEP);
+}
+
+void HAL_DBGMCU_EnableDBGStopMode(void)
+{
+    //저전력 모드인 STOP 모드에서 디버그 모듈 유지 여부 설정
+    SET_BIT(DBGMCU -> CR, DBGMCU_CR_DBG_STOP);
+}
+
+void HAL_DBGMCU_DisableDBGStopMode(void)
+{
+    CLEAR_BIT(DBGMCU -> CR, DBGMCU_CR_DBG_STOP);
+}
+
+void HAL_DBGMCU_EnableDBGStandbyMode(void)
+{
+    //SLEEP<STOP<STANDBY 순으로 저전력 정도가 깊어짐(더 많은 클럭/전원이 꺼짐)
+    //각 모드마다 디버그 모듈 유지 여부를 개별적으로 켜고 끌수 있게 3쌍(6개)함수로 제공
+    SET_BIT(DBGMCU -> CR, DBGMCU_CR_DBG_STANDBY);
+}
+
+void HAL_DBGMCU_DisableDBGStandbyMode(void)
+{
+    CLEAR_BIT(DBGMCU -> CR, DBGMCU_CR_DBG_STANDBY);
+}
+
+//CMP_PD비트를 실제로 조작하는 함수(전원전압이 2.4~3.6V 범위일때만 정상동작)
+void HAL_EnableCompensationCell(void)
+{
+    //포인터 캐스팅후 그 주소에 1대입 : 비트 밴딩 방식으로 CMP_PD 비트만 1로 세팅
+    *(__IO uint32_t *)CMPCR_CMP_PD_BB = (uint32_t)ENABLE;
+}
+
+void HAL_DisbleCompensationCell(void)
+{
+    //DISABLE(0)대입 : 컴펜세이션 셀을 파워 다운(비활성화)
+    *(__IO uint32_t *)CMPCR_CMP_PD_BB = (uint32_t)DISABLE;
+}
+
+//STM32는 칩마다 고유한 96비트 UID(고유식별자)가 공장에서 각인
+uint32_t HAL_GetUIDw0(void)
+{
+    //UID_BASE주소를 uint32_t 포인터로 캐스팅한 뒤 역참조해서 값을읽음
+    //READ_REG(x) : x를 반환하는 매크로(레지스터 읽기임을 명시적으로 나타내는 가독성용 래퍼)
+    return (READ_REG(*((uint32_t *)UID_BASE)));
+}
+
+//UID_BASE + 4U : 시작 주소에서 4바이트 뒤로 이동 -> 두번째 워드 위치 -> Word 1 반환
+uint32_t HAL_GetUIDw1(void)
+{
+    return (READ_REG(*((uint32_t *)(UID_BASE + 4U))));
+}
+
+//UID_BASE + 8U : 시작주소에서 8바이트 뒤(세번째 워드 위치) -> Word 2반환
+uint32_t HAL_GetUIDw2(void)
+{
+    return (READ_REG(*((uint32_t *)(UID_BASE + 8U))));
+}
+
+//조건부 컴파일 : 듀얼 뱅크 플래시를 지원하는 특정 칩라인에서만 컴파일
+//매크로들이 정의 안되어있는 칩들은 컴파일 자체가 제외
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) ||\
+    defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
+
+//어느 뱅크가 부팅위치를 차지할지 스왑하는 역할
+void HAL_EnableMemorySwappingBank(void)
+{
+    //UFB_MODE_BB 비트밴딩 주소에 1을 대입 -> UFB_MODE=1 -> Bank2를 0번지로 스왑
+    *(__IO uint32_t *)UFB_MODE_BB = (uint32_t)ENABLE;
+}
+
+//UFB_MODE = 0 -> 기본 상태로 복귀(Bank1이 0번지, 원래 부팅 뱅크)
+//OTA 업데이트시 Bank1 <-> Bank2 전환 시나리오에서 실제로 호출하게되는 함수
+void HAL_DisableMemorySwappingBank(void)
+{
+    *(__IO uint32_t *)UFB_MODE_BB = (uint32_t)DISABLE;
+}
+
+#endif
