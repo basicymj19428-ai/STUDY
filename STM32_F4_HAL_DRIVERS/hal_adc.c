@@ -121,3 +121,62 @@ HAL_StatusTypeDef HAL_ADC_Init(ADC_HandleTypeDef *hadc)
     //최종적으로 tmp_hal_status(HAL_OK또는 HAL_ERROR)를 리턴하며 함수 종료
     return tmp_hal_status;
 }
+
+//ADC 레지스터를 리셋 기본값으로 되돌림(Init의 정반대 동작)
+HAL_StatusTypeDef HAL_ADC_DeInit(ADC_HandleTypeDef *hadc)
+{
+    HAL_StatusTypeDef tmp_hal_status = HAL_OK;
+
+    /*Check ADC handle*/
+    if (hadc == NULL)
+    {
+        return HAL_ERROR;
+    }
+
+    /*Check the parameters*/
+    //어느 ADC 페리페럴인지, ADC1/ADC2/ADC3 만 검사
+    //무조건 리셋값으로 되돌리는 동작이라 검증할 필요 없음
+    assert_param(IS_ADC_ALL_INSTANCE(hadc -> Instance));
+
+    /*Set ADC state*/
+    //내부적으로 정리 작업중이라는 표시
+    SET_BIT(hadc -> State, HAL_ADC_STATE BUSY_INTERNAL);
+
+    /*Disable ADC peripheral*/
+    //진행중인 변환이 있다면 멈추기 위해 ADC 자체를 비활성화
+    __HAL_ADC_DISABLE(hadc);
+
+    /*correctly completed*/
+    //State 필드가 아니라 실제 하드웨어 레지스터를 검사
+    if(HAL_IS_BIT_CLR(hadc -> Instance ->CR2, ADC_CR2_ADON))
+    {
+
+#if(USE_HAL_ADC_REGISTER_CALLVBACKS == 1)
+    if(hadc -> MspDeInitCallback == NULL)
+    {
+        hadc -> MspDeInitCallback = HAL_ADC_MspDeInit;  /*Legacy weak MspDeInit*/
+    }
+
+    hadc -> MspDeInitCallback(hadc);
+
+#else
+    /*DeIninit the low level hardware : RCC clock, NVIC*/
+    //MspInit에서 켰던 클럭(RCC)이나 인터럽트(NVIC) 설정을 꺼주는 역할
+    HAL_ADC_MspDeInit(hadc);
+#endif
+
+    /*Set ADC error code to none*/
+    //에러 초기화 코드
+    ADC_CLEAR_ERRORCODE(hadc);
+
+    /*Set ADC state*/
+    //비트 단위 리셋이 아닌 전체 리셋
+    hadc -> State = HAL_ADC_STATE_RESET;
+    }
+
+    /*Process unlocked*/
+    __HAL_UNLOCK(hadc);
+
+    /*Return function status*/
+    return tmp_hal_status;
+}
