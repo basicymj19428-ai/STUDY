@@ -180,3 +180,88 @@ HAL_StatusTypeDef HAL_ADC_DeInit(ADC_HandleTypeDef *hadc)
     /*Return function status*/
     return tmp_hal_status;
 }
+
+//REGISTER_CALLBACKS 모드가 켜져있을때만 컴파일
+#if(USE_HAL_ADC_REGISTER_CALLBACKS == 1)
+
+HAL_StatusTypeDef HAL_ADC_RegisterCallback(ADC_HandleTypeDef * hadc, HAL_ADC_CallbackIDTypeDef callbackID, pADC_CallbackTypeDef pCallback)
+{
+    HAL_StatusTypeDef status = HAL_OK;
+
+    //새로 등록하려는 콜백 함수 포인터 자체가 NULL이면 즉시 에러
+    if(pCallback == NULL)
+    {
+        /* Update the error code*/
+        hadc -> ErrorCode |= HAL_ADC_ERROR_INVALID_CALLBACK;
+        return HAL_ERROR;
+    }
+
+    if((hadc -> State & HAL_ADC_STATE_READY) != OUL)
+    {
+        switch(CallbackID)
+        {
+            //케이스 1 : hadc -> state에 READY 비트가 켜져 있는 경우(일반 콜백들을 자유롭게 등록가능)
+            case HAL_ADC_CONVERSION_COMPLETE_CB_ID :
+                hadc -> convcpltCallback = pCallback;
+                break;
+            
+            case HAL_ADC_CONVERSION_HALF_CB_ID : 
+                hadc -> ConvHalfCpltCallback = pCallback;
+                break;
+
+            case HAL_ADC_LEVEL_OUT_OF_WINDOW_1_CB_ID :
+                hadc -> LevelOutOfWindowCallback = pCallback;
+                break;
+
+            case HAL_ADC_ERROR_CB_ID :
+                hadc -> ErrorCallback = pCallback;
+                break;
+
+            case HAL_ADC_INJ_CONVERSION_COMPLETE_CB_ID :
+                hadc -> InjectedConvCpltCallback = pCallback;
+                break;
+
+            case HAL_ADC_MSPINIT_CB_ID :
+                hadc -> MspInitcallback = pCallback;
+                break;
+
+            case HAL_ADC_MSPDEINIT_CB_ID : 
+                hadc -> MspDeInitCallback = pCallback;
+                break;
+
+            //목록에 없는 이상한 CallbackID가 들어온 경우 방어
+            default :
+                hadc -> ErrorCode |= HAL_ADC_ERROR_INVALID_CALLBACK;
+                status = HAL_ERROR;
+                break;
+        }
+    }
+    
+    //케이스 2 : State가 정확히 RESET인 경우 MSPINIT/MSPDEINIT 콜백만 등록 허용
+    else if(HAL_ADC_STATE_RESET == hadc -> State)
+    {
+        switch(CallbackID)
+        {
+            case HAL_ADC_MSPINIT_CB_ID :
+                hadc -> MspInitCallback = pCallback;
+                break;
+
+            case HAL_ADC_MSPDEINIT_CB_ID : 
+                hadc -> MspInitCallback = pCallback;
+                break;
+
+            //RESET 상태에서 MSPINIT/MSPDEINIT 이외의 콜백을 등록하려 하면 에러
+            default : 
+                hadc -> ErrorCode |= HAL_ADC_ERROR_INVALID_CALLBACK;
+                status = HAL_ERROR;
+                break;
+        }
+    }
+
+    //케이스 3 : READY도 아니고 RESET도 아닌 경우 -> 어떤 콜백도 등록 불가
+    else
+    {
+        hadc -> ErrorCode |= HAL_ADC_ERROR_INVALID_CALLBACK;
+        status = HAL_ERROR;
+    }
+}
