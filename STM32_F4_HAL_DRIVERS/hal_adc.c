@@ -264,4 +264,34 @@ HAL_StatusTypeDef HAL_ADC_RegisterCallback(ADC_HandleTypeDef * hadc, HAL_ADC_Cal
         hadc -> ErrorCode |= HAL_ADC_ERROR_INVALID_CALLBACK;
         status = HAL_ERROR;
     }
+
+    return status;
+}
+
+//기본값으로 되돌리는 명령
+HAL_StatusTypeDef HAL_ADC_UnRegisterCallback(ADC_HandleTypeDef *hadc, HAL_ADC_CallbackIDTypeDef CallbackID)
+{
+    HAL_StatusTypeDef status = HAL_OK;
+
+    if((hadc -> State & HAL_ADC_STATE_READY) != OUL)
+    {
+        switch(CallbackID)
+        {
+            case HAL_ADC_CONVERSION_COMPLETE_CB_ID :
+                hadc -> ConvCpltCallback = HAL_ADC_ConvCpltCallback;
+                break;
+
+            case HAL_ADC_CONVERSION_HALF_CB_ID : 
+                hadc -> ConvHalfCpltCallback = HAL_ADC_ConvHalfCpltCallback;
+                break;
+
+            case HAL_ADC_LEVEL_OUT_OF_WINDOW_1_CB_ID : 
+                hadc -> LevelOutOfWindowCallback = HAL_ADC_LevelOutOfWindowCallback;
+                break;
+
+            case HAL_ADC_ERROR_CB_ID : 
+                hadc -> ErrorCallback = HAL_ADC_ErrorCallback;
+                break;
+        }
+    }
 }
