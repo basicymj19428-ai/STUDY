@@ -1,0 +1,24 @@
+#include <stdio.h>
+
+int change_val(int* pi)
+{
+	printf("---change_val 함수안에서---\n");
+	printf("pi의 값 : %p\n", pi);
+	printf("pi가 가리키는 것의 값 ; %d\n", *pi);
+
+	*pi = 3;
+	printf("---change_val 함수 끝---\n");
+
+	return 0;
+}
+
+int main(void) 
+{
+	int i = 0;
+	printf("i의 변수의 주소값 : %p\n", &i);
+	printf("호출 이전 i의 값 ; %d\n", i);
+	change_val(&i);
+	printf("호출 이후 i의 값 : %d\n", i);
+
+	return 0;
+}
