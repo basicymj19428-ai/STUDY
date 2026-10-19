@@ -292,6 +292,49 @@ HAL_StatusTypeDef HAL_ADC_UnRegisterCallback(ADC_HandleTypeDef *hadc, HAL_ADC_Ca
             case HAL_ADC_ERROR_CB_ID : 
                 hadc -> ErrorCallback = HAL_ADC_ErrorCallback;
                 break;
+
+            case HAL_ADC_INJ_CONVERSION_COMPLETE_CB_ID :
+                hadc -> InjectedConvCpltCallback = HAL_ADCEx_InjectedConvCpltCallback;
+                break;
+
+            case HAL_ADC_MSPINIT_CB_ID : 
+                hadc -> MspInitCallback = HAL_ADC_MspInit;  /*Legacy weak MspInit*/
+                break;
+
+            case HAL_ADC_MSPDEINIT_CB_ID :
+                hadc -> MspDeInitCallback = HAL_ADC_MspDeInit;  /*Legacy weak MspInit*/
+                break;
+
+            default : 
+                hadc -> ErrorCpde |= HAL_ADC_ERROR_INVALID_CALLBACK;
+                status = HAL_ERROR;
+                break;
         }
     }
+
+    else if(HAL_ADC_STATE_RESET == hadc -> State) {
+        switch(callbackID) {
+            case HAL_ADC_MSPINIT_CB_ID : 
+                hadc -> MspInitCallback = HAL_ADC_MspInit;
+                break; 
+
+            case HAL_ADC_MSPDEINIT_CB_ID : 
+                hadc -> MspDeInitCallback = HAL_ADC_MspDeInit;
+                break;
+
+            default : 
+                hadc -> ErrorCode |= HAL_ADC_ERROR_INVALID_CALLBACK;
+                status = HAL_ERROR;
+                break;
+        }
+    }
+
+    else {
+        hadc -> ErrorCode |= HAL_ADC_ERROR_INVALID_CALLBACK;
+        status = HAL_ERROR;
+    }
+
+    return status;
 }
+
+#endif
