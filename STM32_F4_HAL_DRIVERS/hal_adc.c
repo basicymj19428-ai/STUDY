@@ -338,3 +338,14 @@ HAL_StatusTypeDef HAL_ADC_UnRegisterCallback(ADC_HandleTypeDef *hadc, HAL_ADC_Ca
 }
 
 #endif
+
+__weak void HAL ADC _MspInit(ADC_HandletypeDef *hadc)
+{
+    UNUSED(hadc);  //컴파일후 생성되는 기계어 없음
+}
+
+//MspDeInit의 Doxygen 헤더
+__weak void HAL_ADC_MspDeInit(ADC_HandleTypeDef *hadc)
+{
+    UNUSED(hadc);
+}
