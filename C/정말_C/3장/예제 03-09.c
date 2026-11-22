@@ -11,13 +11,13 @@ int main(void)
 {
     int val = 0;
 
-    val = 1 + 2;
+    val = 1 + 2;  /*변수 선언 및 초기화*/
 
-    printf("1 + 2 = %d\n", val);
+    printf("1 + 2 = %d\n", val);  //덧셈 연산후 대입 연산
 
     val = 2 + 3;
 
-    printf("2 + 3 = %d", val);
+    printf("2 + 3 = %d", val);  //문자열 출력
 
     return 0;
 }
